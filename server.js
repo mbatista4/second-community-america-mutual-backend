@@ -9,6 +9,14 @@ const app = express();
 app.use(express.json());
 
 //connection to DB
+mongoose.connect(
+	process.env.MONGO_URI,
+	{
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	},
+	() => console.log("Connected To mongoDB server")
+);
 
 const memberRoutes = require("./routes/MemberRoutes");
 app.use("/member", memberRoutes);

@@ -1,10 +1,7 @@
 
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
 const Teller = require('../models/Teller');
-
-router.get('/', (req,res) =>{
-
-});
 
 router.post('/login', async (req,res) =>{
 
@@ -14,21 +11,35 @@ router.post('/login', async (req,res) =>{
     } = req.body;
 
     const existingAccount = await Teller.findOne({userId});
-    
-    console.log(existingAccount.password);
 
     if(!existingAccount || existingAccount.password.localeCompare(password) != 0) {
        return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
     }
 
+    if(existingAccount.isClockedIn) {
+        return res.status(409).json({msg: "Teller is logged in somewhere else. you have to logout first"});
+    }
+
 
     existingAccount.isClockedIn = true;
 
-   let response =  await existingAccount.save();
+    const token = jwt.sign({
+        user: existingAccount._id,
+        type: 'teller'
+    },process.env.SECRET,{expiresIn: '8h'});
 
-    console.log(response);
-    return res.status(200).json({response});
+    //let older_token = jwt.sign({ type: 'teller', iat: Math.floor(Date.now() / 1000) - 30 }, process.env.SECRET, {expiresIn: 1});
 
+    try {
+        let response =  await existingAccount.save();
+
+        console.log(response._id);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg: "An error occured when trying to login. please try again in a few minutes",error});
+    }
+
+    return res.status(200).json(token);
 });
 
 router.post('/logout/:id',async (req,res) =>{
@@ -37,8 +48,6 @@ router.post('/logout/:id',async (req,res) =>{
 
     const existingAccount = await Teller.findOne({_id: id});
     
-    console.log(existingAccount);
-
     if(!existingAccount || !existingAccount.isClockedIn) {
        return res.status(409).json({msg: "account does not exists or or is not logged in!"});
     }
@@ -47,10 +56,10 @@ router.post('/logout/:id',async (req,res) =>{
 
    let response =  await existingAccount.save();
 
-    console.log(response);
+    console.log("logged out");
     return res.status(200).json({response});
-
 });
+
 
 // router.post('/create_account', async (req,res) =>{
 

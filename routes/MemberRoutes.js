@@ -11,8 +11,8 @@ module.exports = router;
 router.post('/member', async (req,res)=>{
 
 	let {
-		firstname,
-		lastname,
+		firstName,
+		lastName,
 		address,
 		userId,
 		password,
@@ -20,11 +20,16 @@ router.post('/member', async (req,res)=>{
 		dateOfBirth
 	} = req.body;
 
-	//todo
+	
 	// check if ssn is already in use or bad length
 	const ssnInUse = await Member.findOne({socialSecurityNumber});
 
-	if(ssnInUse || socialSecurityNumber.length != 9)
+	if(ssnInUse)
+	{
+		return res.status(409).json({msg: "SSN already in use!"});
+	}
+
+	if(socialSecurityNumber.length != 9)
 	{
 		return res.status(409).json({msg: "SSN invalid!"});
 	}
@@ -42,7 +47,19 @@ router.post('/member', async (req,res)=>{
 		return res.status(409).json({msg: "Password not compliant!"});
 	}
 		//				else add to db
-		//				?????
-		//				profit.
 
+	const newmember = new Member({
+
+		firstName,
+		lastName,
+		address,
+		userId,
+		password,
+		socialSecurityNumber,
+		dateOfBirth
+
+	});
+
+	await newmember.save();
+	return res.status(201).json({msg: "success"})
 });

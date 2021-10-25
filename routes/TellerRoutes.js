@@ -61,7 +61,17 @@ router.post('/logout/:id',async (req,res) =>{
 });
 
 
-// router.post('/create_account', async (req,res) =>{
+router.post('/create_account', async (req,res) =>{
+
+    let {
+        userId,
+        password
+    }  = req.body;
+
+    return res.status(200).json({token: jwt.sign({userId},process.env.SECRET,{expiresIn: '1h'})});
+
+
+
 
 //     let {
 //         firstName,
@@ -91,6 +101,6 @@ router.post('/logout/:id',async (req,res) =>{
 //         savedAccount
 //     });
 
-// });
+});
 
 module.exports= router;

@@ -9,7 +9,9 @@ const {tellerRoutes,bankAccountRoutes,memberRoutes} = require("./routes/index");
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors( {
+	origin: '*'
+}));
 
 //connection to DB
 mongoose.connect(

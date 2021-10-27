@@ -6,16 +6,16 @@ const tellerSchema = new Schema({
         required: true,
         ref: 'Member'
     },
-    accountNumber: {
+    accountType: {
         type: String,
         required: true,
-        unique: true
     },
-    accountType: {
+    accountNumber: {
         type: Number,
         required: true,
         minlength: 9,
-        maxlength: 10
+        maxlength: 10,
+        unique: true
     },
     balance: {
         type: Number,

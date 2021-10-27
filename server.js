@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const {tellerRoutes,bankAccountRoutes,memberRoutes} = require("./routes/index");
 const app = express();
 
 app.use(express.json());
@@ -20,10 +21,9 @@ mongoose.connect(
 	() => console.log("Connected To mongoDB server")
 );
 
-const memberRoutes = require("./routes/MemberRoutes");
-const tellerRoutes = require("./routes/TellerRoutes");
 app.use("/member", memberRoutes);
 app.use("/teller",tellerRoutes);
+app.use("/account",bankAccountRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Starting server on port ${PORT}`));

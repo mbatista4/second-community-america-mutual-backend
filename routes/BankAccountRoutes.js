@@ -1,19 +1,41 @@
 const router = require('express').Router();
 const BankAccount = require('../models/BankAccount');
 const Member = require('../models/Member');
-const {memberAuth} = require('../auth/auth');
+const {memberAuth,tellerAuth} = require('../auth/auth');
 
 //This returns all of the bank accounts linked to a Member
 router.get('/get', memberAuth, async (req,res) =>{
 
     let {user} = req.user;
     let list = await BankAccount.find({owner:user});
-    res.send(list);
 
+    let bankList = [];
+
+    bankList = list.map(mutateData);
+    
+    console.log(bankList);
+
+    res.send(bankList);
+});
+
+
+// this method returns a single bank account 
+router.get('/get/:id', memberAuth, async (req,res) =>{
+
+    const {id} = req.params;
+    let bankAccount = await BankAccount.findOne({_id:id});
+
+    if(req.user.user != bankAccount.owner){
+       return res.status(409).json({
+           msg: "the logged in user is not the owner of this account!"
+       });
+    }
+
+    res.status(200).json(bankAccount);
 });
 
 // this method creates a bank account and links it to a Member
-router.post('/create_account', async (req,res) =>{
+router.post('/create_account',  tellerAuth, async (req,res) =>{
 
     let {
         id,
@@ -23,13 +45,11 @@ router.post('/create_account', async (req,res) =>{
     let accountNumber = generate(9);
     let accountFound = await BankAccount.findOne({accountNumber});
     
-    console.log(accountNumber);
     while(accountFound) {
         accountNumber = generate(9);
         accountFound = await BankAccount.findOne({accountNumber});
     }
 
-    console.log("here");
 
     let newAccount = new BankAccount({
         owner: id,
@@ -62,6 +82,15 @@ function generate(n) {
     console.log(number + " here");
 
     return number; 
+}
+
+// this function mutates the account data to just show basic information
+function mutateData(account) {
+    let temp = {};
+    temp.accountNumber = account.accountNumber;
+    temp.balance = account.balance;
+    temp._id = account._id;
+    return temp;
 }
 
 

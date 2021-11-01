@@ -3,12 +3,12 @@ const Member = require('../models/Member');
 
 
 router.get("/", (req, res) => {
-	res.status(200).json({ msg: "hello world" });
+	res.status(200).json({ msg: "Connection established." });
 });
 
 module.exports = router;
 
-router.post('/member', async (req,res)=>{
+router.post('register_member', async (req,res)=>{
 
 	let {
 		firstName,
@@ -17,7 +17,7 @@ router.post('/member', async (req,res)=>{
 		userId,
 		password,
 		socialSecurityNumber,
-		dateOfBirth
+		dateOfBirth,
 	} = req.body;
 
 	
@@ -62,4 +62,74 @@ router.post('/member', async (req,res)=>{
 
 	await newmember.save();
 	return res.status(201).json({msg: "success"})
+});
+
+
+router.post('/login_member', async (req,res)=>{
+
+
+	let {
+
+		userId,
+		password,
+
+	} = req.body;
+
+
+    const existingAccount = await Member.findOne({userId});
+
+
+
+
+
+    if(!existingAccount || existingAccount.password.localeCompare(password) != 0) {
+       return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
+    }
+
+	if(existingAccount.isLoggdIn)
+	{
+		return res.status(409).json({msg: "Account is logged in elsewhere. please log out of the instance."});
+	}
+
+
+    existingAccount.isLoggdIn = true;
+
+ const token = jwt.sign({
+        user: existingAccount._id,
+	},process.env.SECRET,{expiresIn: '8h'});
+
+
+
+	try {
+        let response =  await existingAccount.save();
+
+        console.log(response._id);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg: "An error occured when trying to login. please try again in a few minutes",error});
+    }
+
+
+	return res.status(200).json(token);
+
+
+});
+
+
+
+
+
+
+router.post('logout_member/:id', async (req,res)=>{
+
+    let {id} = req.params;
+
+    const Account = await Member.findOne({_id: id});
+
+	Account.isClockedIn = false;
+
+	let response =  await Account.save();
+ 
+	 console.log("logged out");
+	 return res.status(200).json({response});
 });

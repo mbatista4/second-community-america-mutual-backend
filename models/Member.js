@@ -31,6 +31,11 @@ const memberSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    isLoggedIn: {
+        type: Boolean,
+        required: true,
+        default: false
+    }
 });
 
 

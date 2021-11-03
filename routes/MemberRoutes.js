@@ -86,10 +86,6 @@ router.post('/login_member', async (req,res)=>{
        return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
     }
 
-	if(existingAccount.isLoggdIn)
-	{
-		return res.status(409).json({msg: "Account is logged in elsewhere. please log out of the instance."});
-	}
 
 
     existingAccount.isLoggdIn = true;

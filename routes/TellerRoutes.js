@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const Teller = require('../models/Teller');
+const {compare}= require('bcryptjs');
 
 router.post('/login', async (req,res) =>{
 
@@ -12,9 +13,16 @@ router.post('/login', async (req,res) =>{
 
     const existingAccount = await Teller.findOne({userId});
 
-    if(!existingAccount || existingAccount.password.localeCompare(password) != 0) {
-       return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
+    if(!existingAccount) {
+       return res.status(409).json({msg: "account does not exists!"});
     }
+    
+    let isSame = await compare(password,existingAccount.password); 
+    
+    if(!isSame) {
+        return res.status(409).json({msg: "Password is incorrect!"});
+    }
+    
 
     if(existingAccount.isClockedIn) {
         return res.status(409).json({msg: "Teller is logged in somewhere else. you have to logout first"});
@@ -69,10 +77,7 @@ router.post('/create_account', async (req,res) =>{
     }  = req.body;
 
     return res.status(200).json({token: jwt.sign({userId},process.env.SECRET,{expiresIn: '1h'})});
-
-
-
-
+});
 //     let {
 //         firstName,
 //         lastName,
@@ -87,11 +92,15 @@ router.post('/create_account', async (req,res) =>{
 //         });
 //     }
 
+//     let salt = bcryptjs.genSalt(15);
+//     let ePassword = bcryptjs.hash(password,salt);
+
+
 //     const newAccount = new Teller({
 //         firstName,
 //         lastName,
 //         userId,
-//         password
+//         password: ePassword
 //     });
 
 //     const savedAccount = await newAccount.save();
@@ -101,6 +110,6 @@ router.post('/create_account', async (req,res) =>{
 //         savedAccount
 //     });
 
-});
+// });
 
 module.exports= router;

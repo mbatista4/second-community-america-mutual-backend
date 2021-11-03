@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs");
 const router = require("express").Router();
 const Member = require('../models/Member');
 

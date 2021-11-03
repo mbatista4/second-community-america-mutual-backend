@@ -9,7 +9,7 @@ router.get("/", (req, res) => {
 
 module.exports = router;
 
-router.post('register_member', async (req,res)=>{
+router.post('/register_member', async (req,res)=>{
 
 	let {
 		firstName,

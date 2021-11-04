@@ -1,6 +1,7 @@
 const bcryptjs = require("bcryptjs");
 const router = require("express").Router();
 const Member = require('../models/Member');
+const jwt = require('jsonwebtoken');
 
 
 router.get("/", (req, res) => {
@@ -9,7 +10,7 @@ router.get("/", (req, res) => {
 
 module.exports = router;
 
-router.post('register_member', async (req,res)=>{
+router.post('/register_member', async (req,res)=>{
 
 	let {
 		firstName,
@@ -45,7 +46,10 @@ router.post('register_member', async (req,res)=>{
 	if(password.length < 8){
 		return res.status(409).json({msg: "Password not compliant!"});
 	}
-		
+	
+	const salt = await bcryptjs.genSalt();
+	const hashedPassword = await bcryptjs.hash(password, salt);
+
 
 	const newmember = new Member({
 
@@ -53,7 +57,7 @@ router.post('register_member', async (req,res)=>{
 		lastName,
 		address,
 		userId,
-		password,
+		password : hashedPassword,
 		socialSecurityNumber,
 		dateOfBirth
 
@@ -73,15 +77,16 @@ router.post('/login_member', async (req,res)=>{
 
     const existingAccount = await Member.findOne({userId});
 
+	console.log(existingAccount)
 
-	let isPassword = await bcryptjs.compare(existingAccount.password,password);
+	let isPassword = await bcryptjs.compare(password,existingAccount.password);
 
     if(!existingAccount || !isPassword) {
        return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
     }
 
 
- const token = jwt.sign({
+ 	const token = jwt.sign({
         user: existingAccount._id,
 	},process.env.SECRET,{expiresIn: '1h'});
 

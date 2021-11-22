@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const Teller = require('../models/Teller');
-const {compare}= require('bcryptjs');
+const {compare, hash, genSalt}= require('bcryptjs');
 
 router.post('/login', async (req,res) =>{
 
@@ -72,44 +72,37 @@ router.post('/logout/:id',async (req,res) =>{
 router.post('/create_account', async (req,res) =>{
 
     let {
+        firstName,
+        lastName,
         userId,
         password
-    }  = req.body;
+    } = req.body;
+  const exisitingAccount = await Teller.findOne({userId});
 
-    return res.status(200).json({token: jwt.sign({userId},process.env.SECRET,{expiresIn: '1h'})});
+    if(exisitingAccount) {
+        return res.status(409).json({
+            msg: `an existing user with the id ${userId} already exists`
+        });
+    }
+
+    let salt = await genSalt(15);
+    let ePassword = await hash(password,salt);
+
+
+    const newAccount = new Teller({
+        firstName,
+        lastName,
+        userId,
+        password: ePassword
+    });
+
+    const savedAccount = await newAccount.save();
+
+   return res.status(201).json({
+        msg: 'success',
+        savedAccount
+    });
+
 });
-//     let {
-//         firstName,
-//         lastName,
-//         userId,
-//         password
-//     } = req.body;
-//   const exisitingAccount = await Teller.findOne({userId});
-
-//     if(exisitingAccount) {
-//         return res.status(409).json({
-//             msg: `an existing user with the id ${userId} already exists`
-//         });
-//     }
-
-//     let salt = bcryptjs.genSalt(15);
-//     let ePassword = bcryptjs.hash(password,salt);
-
-
-//     const newAccount = new Teller({
-//         firstName,
-//         lastName,
-//         userId,
-//         password: ePassword
-//     });
-
-//     const savedAccount = await newAccount.save();
-
-//    return res.status(201).json({
-//         msg: 'success',
-//         savedAccount
-//     });
-
-// });
 
 module.exports= router;

@@ -1,14 +1,15 @@
+const bcryptjs = require("bcryptjs");
 const router = require("express").Router();
 const Member = require('../models/Member');
 
 
 router.get("/", (req, res) => {
-	res.status(200).json({ msg: "hello world" });
+	res.status(200).json({ msg: "Connection established." });
 });
 
 module.exports = router;
 
-router.post('/member', async (req,res)=>{
+router.post('/register_member', async (req,res)=>{
 
 	let {
 		firstName,
@@ -17,11 +18,10 @@ router.post('/member', async (req,res)=>{
 		userId,
 		password,
 		socialSecurityNumber,
-		dateOfBirth
+		dateOfBirth,
 	} = req.body;
 
 	
-	// check if ssn is already in use or bad length
 	const ssnInUse = await Member.findOne({socialSecurityNumber});
 
 	if(ssnInUse)
@@ -34,7 +34,6 @@ router.post('/member', async (req,res)=>{
 		return res.status(409).json({msg: "SSN invalid!"});
 	}
 
-		//		if not check if userid is in use
 	const idInUse = await Member.findOne({userId});
 
 	if(idInUse){
@@ -42,11 +41,11 @@ router.post('/member', async (req,res)=>{
 		return res.status(409).json({msg: "Account id already exists!"});
 	}
 
-		//			if not check if pwrd is not compliant
+	
 	if(password.length < 8){
 		return res.status(409).json({msg: "Password not compliant!"});
 	}
-		//				else add to db
+		
 
 	const newmember = new Member({
 
@@ -62,4 +61,30 @@ router.post('/member', async (req,res)=>{
 
 	await newmember.save();
 	return res.status(201).json({msg: "success"})
+});
+
+
+router.post('/login_member', async (req,res)=>{
+
+	let {
+		userId,
+		password,
+	} = req.body;
+
+    const existingAccount = await Member.findOne({userId});
+
+
+	let isPassword = await bcryptjs.compare(existingAccount.password,password);
+
+    if(!existingAccount || !isPassword) {
+       return res.status(409).json({msg: "account does not exists or password is inccorrect!"});
+    }
+
+
+ const token = jwt.sign({
+        user: existingAccount._id,
+	},process.env.SECRET,{expiresIn: '1h'});
+
+	return res.status(200).json(token);
+
 });

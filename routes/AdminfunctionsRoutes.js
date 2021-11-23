@@ -123,9 +123,6 @@ router.post('/edit_teller', async (req,res)=>{
 		userIdInUse.save();
 		return res.status(200).json({token: jwt.sign({userId},process.env.SECRET,{expiresIn: '1h'})});
 		
-
-
-
 });
 
 

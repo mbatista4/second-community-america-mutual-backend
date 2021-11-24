@@ -82,7 +82,7 @@ router.post('/find_tellerByUserId', async (req,res)=>{
 });
 
 
-router.post('/edit_teller', async (req,res)=>{
+router.put('/edit_teller', async (req,res)=>{
 
 	let {
         firstName,
@@ -126,7 +126,7 @@ router.post('/edit_teller', async (req,res)=>{
 });
 
 
-router.post('/retire_teller', async (req,res)=>{
+router.delete('/remove_teller', async (req,res)=>{
 
 //set password to empty. add if password is empty you may not log in.
 

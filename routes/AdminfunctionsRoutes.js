@@ -11,7 +11,7 @@ module.exports = router;
 
 router.get('/get_all_tellers', async (req,res)=>{
 
-	const all_tellers = await Teller.find({userId});
+	const all_tellers = await Teller.find();
 	return res.status(200).json(all_tellers);
 
 });

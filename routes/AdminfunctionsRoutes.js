@@ -9,6 +9,13 @@ router.get("/", (req, res) => {
 
 module.exports = router;
 
+router.get('/get_all_tellers', async (req,res)=>{
+
+	const all_tellers = await Teller.find({userId});
+	return res.status(200).json(all_tellers);
+
+});
+
 router.post('/create_teller', async (req,res)=>{
 
     let {
@@ -112,16 +119,11 @@ router.put('/edit_teller', async (req,res)=>{
 	userIdInUse.firstName = firstName;
 	userIdInUse.lastName = lastName;
 
-    const token = jwt.sign({
-        id: user._id,
-        type: 'admin'
-    },process.env.SECRET,{expiresIn: '8h'}); 
-	
-	//userIdInUse.password = bcryptjs.password;
+		//userIdInUse.password = bcryptjs.password;
 
 		//edit the record
-		userIdInUse.save();
-		return res.status(200).json({token: jwt.sign({userId},process.env.SECRET,{expiresIn: '1h'})});
+		await userIdInUse.save();
+		return res.status(200).json({userIdInUse});
 		
 });
 
@@ -131,4 +133,3 @@ router.delete('/remove_teller', async (req,res)=>{
 //set password to empty. add if password is empty you may not log in.
 
 }); 
-

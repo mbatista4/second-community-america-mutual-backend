@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const BankAccount = require('../models/BankAccount');
 const Member = require('../models/Member');
+const Transaction = require('../models/Transaction');
 const {memberAuth,tellerAuth} = require('../auth/auth');
 
 //This returns all of the bank accounts linked to a Member
@@ -20,28 +21,42 @@ router.get('/get', memberAuth, async (req,res) =>{
 
 
 // this method returns a single bank account 
-router.get('/get/:id', memberAuth, async (req,res) =>{
+router.get('/get/:id', async (req,res) =>{
 
     const {id} = req.params;
     let bankAccount = await BankAccount.findOne({_id:id});
 
-    if(req.user.user != bankAccount.owner){
-       return res.status(409).json({
-           msg: "the logged in user is not the owner of this account!"
-       });
-    }
+    let transactionList = [];
 
-    res.status(200).json(bankAccount);
+    transactionList = await Transaction.find({owner: id});
+    let mutatedAccount = mutateData(bankAccount);
+    mutatedAccount = {... mutatedAccount, transactionList }
+
+    console.log(transactionList);
+
+    // if(req.user.user != bankAccount.owner){
+    //    return res.status(409).json({
+    //        msg: "the logged in user is not the owner of this account!"
+    //    });
+    // }
+
+    res.status(200).json(mutatedAccount);
 });
 
 // this method creates a bank account and links it to a Member
-router.post('/create_account',  tellerAuth, async (req,res) =>{
+router.post('/create_account', tellerAuth,async (req,res) =>{
 
     let {
-        id,
+        userId,
         accountType,
     } = req.body;
     
+    let accountOwner = await Member.findOne({userId});
+
+    if(!accountOwner) {
+        return res.status(409).json({msg:`account with userId: ${userId} not found`});
+    }
+
     let accountNumber = generate(9);
     let accountFound = await BankAccount.findOne({accountNumber});
     
@@ -50,9 +65,8 @@ router.post('/create_account',  tellerAuth, async (req,res) =>{
         accountFound = await BankAccount.findOne({accountNumber});
     }
 
-
     let newAccount = new BankAccount({
-        owner: id,
+        owner: accountOwner._id,
         accountNumber,
         accountType
     });
@@ -64,7 +78,31 @@ router.post('/create_account',  tellerAuth, async (req,res) =>{
 
     return res.status(201).json({savedAccount});
 
+});
 
+router.post('/transaction/new/:id', tellerAuth,async (req,res) => {
+
+    const {id} = req.params;
+    const {amount, description} = req.body;
+
+    console.log(id);
+
+    let bankAccount = await BankAccount.findOne({_id:id});
+    bankAccount.balance = bankAccount.balance + amount;
+
+    console.log(bankAccount);
+
+    if(bankAccount.balance < 0) {
+        return res.status(409).json({msg: "insuficient funds. deposit money before attempting this transaction again"});
+    }
+
+    const newTransaction  = new Transaction({owner: id, amount, description});
+
+
+    await newTransaction.save();
+    await bankAccount.save();
+
+    res.status(200).json({msg: "Transaction was sucessful"});
 });
 
 // this function generates a random number to be used as an Account number

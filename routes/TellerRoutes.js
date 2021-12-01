@@ -3,6 +3,7 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const Teller = require('../models/Teller');
 const {compare, hash, genSalt}= require('bcryptjs');
+const {tellerAuth}  = require('../auth/auth');
 
 router.post('/login', async (req,res) =>{
 
@@ -44,20 +45,22 @@ router.post('/login', async (req,res) =>{
         console.log(response._id);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({msg: "An error occured when trying to login. please try again in a few minutes",error});
+        return res.status(500).json({msg: "An error occurred when trying to login. please try again in a few minutes",error});
     }
 
     return res.status(200).json(token);
 });
 
-router.post('/logout/:id',async (req,res) =>{
+router.post('/logout', tellerAuth ,async (req,res) =>{
 
-    let {id} = req.params;
+    let _id = req.user.user;
 
-    const existingAccount = await Teller.findOne({_id: id});
+    const existingAccount = await Teller.findOne({_id});
+
+    console.log(existingAccount);
     
     if(!existingAccount || !existingAccount.isClockedIn) {
-       return res.status(409).json({msg: "account does not exists or or is not logged in!"});
+       return res.status(409).json({msg: "account does not exists or is not logged in!"});
     }
 
     existingAccount.isClockedIn = false;
@@ -77,9 +80,9 @@ router.post('/create_account', async (req,res) =>{
         userId,
         password
     } = req.body;
-  const exisitingAccount = await Teller.findOne({userId});
+  const existingAccount = await Teller.findOne({userId});
 
-    if(exisitingAccount) {
+    if(existingAccount) {
         return res.status(409).json({
             msg: `an existing user with the id ${userId} already exists`
         });

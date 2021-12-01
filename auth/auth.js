@@ -48,7 +48,7 @@ const tellerAuth = (req, res, next) => {
 
     if(verified.type != 'teller') {
         return res.status(401).json( {
-            msg: "Access denied, not enough permisions"
+            msg: "Access denied, not enough permissions"
         });
     }
 

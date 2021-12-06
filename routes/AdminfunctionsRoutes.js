@@ -25,11 +25,11 @@ router.post('/create_teller', async (req,res)=>{
         password
     } = req.body;
 
-    const userIdInUse = await Member.findOne({userId});
+    const userIdInUse = await Teller.findOne({userId});
 
 	if(userIdInUse)
 	{
-		return res.status(409).json({msg: "Error: userId already in use!"});
+		return res.status(409).json({msg: "Error: UserId already in use!"});
 	}
 	if(password.length < 1){
 		return res.status(409).json({msg: "Error: Password empty!"});
@@ -49,7 +49,7 @@ router.post('/create_teller', async (req,res)=>{
 	});
 
 	await newteller.save();
-	return res.status(201).json({msg: "success"})
+	return res.status(201).json({msg: "Success"})
 
 });
 
@@ -80,7 +80,7 @@ router.post('/find_tellerByUserId', async (req,res)=>{
 
 
 	if(!userIdInUse) {
-		return res.status(409).json({msg: "Error: account does not exists"});
+		return res.status(409).json({msg: "Error: Account does not exists"});
 	 }
 
 	 //return the tellers info
@@ -101,14 +101,14 @@ router.put('/edit_teller', async (req,res)=>{
 	const userIdInUse = await Teller.findOne({userId});
 
 	if(!userIdInUse){	
-		return res.status(409).json({msg: "Error: account does not exists!"});
+		return res.status(409).json({msg: "Error: Account does not exists!"});
 	}
 
 
 
  	if(firstName == userIdInUse.firstName && lastName == userIdInUse.lastName){//add password check
 			//all is same do nothing 
-			return res.status(409).json({msg: "Error: nothing to change"});
+			return res.status(409).json({msg: "Error: Nothing to change"});
  	}
 
 //else edit the collection
@@ -143,13 +143,13 @@ router.delete('/remove_teller', async (req,res)=>{
 	const userIdInUse = await Teller.findOne({userId});
 
 	if(!userIdInUse){	
-		return res.status(409).json({msg: "Error: account does not exists."});
+		return res.status(409).json({msg: "Error: Account does not exists."});
 	}
 
 	if(userIdInUse.isClockedin){
-		return res.status(409).json({msg: "Error: account is clocked in. must be clocked out to be deleted."});
+		return res.status(409).json({msg: "Error: Account is clocked in. must be clocked out to be deleted."});
 	}
 
 	await userIdInUse.delete();
-	return res.status(200).json({msg: "deleted."});
+	return res.status(200).json({msg: "Deleted."});
 }); 

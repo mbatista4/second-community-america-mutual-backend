@@ -80,7 +80,7 @@ const adminAuth = (req, res, next) => {
         });
     }
 
-    if(verified.type != 'teller') {
+    if(verified.type != 'Admin') {
         return res.status(401).json( {
             msg: "Access denied, not enough permisions"
         });

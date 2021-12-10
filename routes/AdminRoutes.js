@@ -1,8 +1,9 @@
 //create_admin, login_admin, logout_admin
 const router = require("express").Router();
-const Teller = require('../models/Admin');
-const bcryptjs = require("bcryptjs");
-const {compare}= require('bcryptjs');
+const Admin = require('../models/Admin');
+const {compare, hash, genSalt}= require('bcryptjs');
+const {adminAuth} = require('../auth/auth');
+const jwt = require("jsonwebtoken");
 
 router.get("/", (req, res) => {
 	res.status(200).json({ msg: "Connection established." });
@@ -37,11 +38,14 @@ router.post('/create_admin', async (req,res)=>{
 		return res.status(409).json({msg: "Error: Last name empty!"});
 	}
 
+    let salt = await genSalt();
+    let hashedPassword = await hash(password, salt);
+
     const newAdmin = new Admin({
 		firstName,
 		lastName,
 		userId,
-		password,
+		password: hashedPassword,
 	});
 
 	await newAdmin.save();
@@ -95,9 +99,9 @@ router.post('/login', async (req,res) =>{
     return res.status(200).json(token);
 });
 
-router.post('/logout/:id',async (req,res) =>{
+router.post('/logout',adminAuth ,async (req,res) =>{
 
-    let {id} = req.params;
+    let id = req.user.user;
 
     const existingAccount = await Admin.findOne({_id: id});
     

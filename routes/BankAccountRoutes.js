@@ -5,7 +5,7 @@ const Transaction = require('../models/Transaction');
 const {memberAuth,tellerAuth} = require('../auth/auth');
 
 //This returns all of the bank accounts linked to a Member
-router.get('/get',async (req,res) =>{
+router.get('/get',memberAuth,async (req,res) =>{
 
     let {owner} = req.query;
 
@@ -80,7 +80,7 @@ router.post('/create_account', tellerAuth,async (req,res) =>{
 
     console.log(savedAccount);
 
-    return res.status(201).json({savedAccount});
+    return res.status(201).json(savedAccount);
 
 });
 

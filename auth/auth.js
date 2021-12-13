@@ -57,7 +57,43 @@ const tellerAuth = (req, res, next) => {
 }
 
 
+const adminAuth = (req, res, next) => {
+
+    const authToken = req.header("x-auth-token");
+
+    if(!authToken) {
+        return res.status(401).json({
+            msg: "No auth token, Access denied hahaha your attempt to hack us has been thwarted by ME the senior back-end engineer."
+        });
+    }
+    let verified;
+    try {
+        verified = jwt.verify(authToken,process.env.SECRET);
+    } catch (error) {
+        return res.status(401).json({
+            msg:"jwtToken: "+ error.message,
+        });
+    }
+    if(!verified){
+        return res.status(401).json({
+            msg: "Access denied, not a valid token"
+        });
+    }
+
+    if(verified.type != 'Admin') {
+        return res.status(401).json( {
+            msg: "Access denied, not enough permisions"
+        });
+    }
+
+    req.user = verified;
+    next();
+
+
+}
+
 module.exports = {
     memberAuth,
-    tellerAuth
+    tellerAuth,
+    adminAuth
 }

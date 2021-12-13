@@ -9,6 +9,12 @@ router.get('/get',memberAuth,async (req,res) =>{
 
     let {owner} = req.query;
 
+    if(!owner) {
+        let user = await Member.findById(req.user.user);
+        owner = user.userId;
+        console.log(owner);
+    }
+
     let member = await Member.findOne({userId: owner});
 
     if(!member){
@@ -31,6 +37,7 @@ router.get('/get',memberAuth,async (req,res) =>{
 router.get('/get-detailed', memberAuth,async (req,res) =>{
 
     const {owner} = req.query;
+
     let bankAccount = await BankAccount.findOne({_id:owner});
 
     let transactionList = [];

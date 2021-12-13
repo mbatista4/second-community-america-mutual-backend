@@ -5,35 +5,39 @@ const Transaction = require('../models/Transaction');
 const {memberAuth,tellerAuth} = require('../auth/auth');
 
 //This returns all of the bank accounts linked to a Member
-router.get('/get', memberAuth, async (req,res) =>{
+router.get('/get',memberAuth,async (req,res) =>{
 
-    let {user} = req.user;
-    let list = await BankAccount.find({owner:user});
+    let {owner} = req.query;
+
+    let member = await Member.findOne({userId: owner});
+
+    if(!member){
+        return res.status(404).json({msg : "Account does not exisit"});
+    }
+
+    let list = await BankAccount.find({owner: member._id});
 
     let bankList = [];
 
-    bankList = list.map(mutateData);
-    
-    console.log(bankList);
+    if(list.length> 0){
+        bankList = list.map(mutateAccount);
+    }
 
-    res.send(bankList);
+    res.status(200).send(bankList);
 });
 
 
 // this method returns a single bank account 
-router.get('/get/:id', async (req,res) =>{
+router.get('/get-detailed', memberAuth,async (req,res) =>{
 
-    const {id} = req.params;
-    let bankAccount = await BankAccount.findOne({_id:id});
+    const {owner} = req.query;
+    let bankAccount = await BankAccount.findOne({_id:owner});
 
     let transactionList = [];
 
-    transactionList = await Transaction.find({owner: id});
-    let mutatedAccount = mutateData(bankAccount);
+    transactionList = await Transaction.find({owner: bankAccount._id});
+    let mutatedAccount = mutateAccount(bankAccount);
     mutatedAccount = {... mutatedAccount, transactionList }
-
-    console.log(transactionList);
-
     // if(req.user.user != bankAccount.owner){
     //    return res.status(409).json({
     //        msg: "the logged in user is not the owner of this account!"
@@ -76,28 +80,21 @@ router.post('/create_account', tellerAuth,async (req,res) =>{
 
     console.log(savedAccount);
 
-    return res.status(201).json({savedAccount});
+    return res.status(201).json(savedAccount);
 
 });
 
-router.post('/transaction/new/:id', tellerAuth,async (req,res) => {
-
-    const {id} = req.params;
-    const {amount, description} = req.body;
-
-    console.log(id);
+router.post('/transaction/new', tellerAuth,async (req,res) => {
+    const {amount, description,id} = req.body;
 
     let bankAccount = await BankAccount.findOne({_id:id});
-    bankAccount.balance = bankAccount.balance + amount;
-
-    console.log(bankAccount);
+    bankAccount.balance +=  Number.parseInt(amount);
 
     if(bankAccount.balance < 0) {
         return res.status(409).json({msg: "insuficient funds. deposit money before attempting this transaction again"});
     }
 
     const newTransaction  = new Transaction({owner: id, amount, description});
-
 
     await newTransaction.save();
     await bankAccount.save();
@@ -117,17 +114,19 @@ function generate(n) {
     var min    = max/10; // Math.pow(10, n) basically
     var number = Math.floor( Math.random() * (max - min + 1) ) + min;
 
-    console.log(number + " here");
-
     return number; 
 }
 
 // this function mutates the account data to just show basic information
-function mutateData(account) {
+function mutateAccount(account) {
+
+    let dollarUSLocale = Intl.NumberFormat('en-US');
+    
     let temp = {};
     temp.accountNumber = account.accountNumber;
-    temp.balance = account.balance;
+    temp.balance = dollarUSLocale.format(account.balance);
     temp._id = account._id;
+    temp.accountType = account.accountType;
     return temp;
 }
 
